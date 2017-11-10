@@ -21,21 +21,21 @@ public class App {
 	    	App app = new App();
 	    	
 	    	// Hybrid of each pair of images
-			MBFImage catImage = ImageUtilities.readMBF(new File("data/dog.bmp"));
-			MBFImage dogImage = ImageUtilities.readMBF(new File("data/cat.bmp"));
-			app.displayHybridImage(catImage, dogImage, app);
+			MBFImage catImage = ImageUtilities.readMBF(new File("data/cat.bmp"));
+			MBFImage dogImage = ImageUtilities.readMBF(new File("data/dog.bmp"));
+			app.displayHybridImage(dogImage, 5, catImage, 5, app);
 
 			MBFImage einsteinImage = ImageUtilities.readMBF(new File("data/einstein.bmp"));
 			MBFImage marilynImage = ImageUtilities.readMBF(new File("data/marilyn.bmp"));
-			app.displayHybridImage(einsteinImage, marilynImage, app);
+			app.displayHybridImage(einsteinImage, 7, marilynImage, 5, app);
 			
 			MBFImage fishImage = ImageUtilities.readMBF(new File("data/fish.bmp"));
 			MBFImage submarineImage = ImageUtilities.readMBF(new File("data/submarine.bmp"));
-			app.displayHybridImage(fishImage, submarineImage, app);
+			app.displayHybridImage(fishImage, 7, submarineImage, 5, app);
 			
 			MBFImage bicycleImage = ImageUtilities.readMBF(new File("data/bicycle.bmp"));
 			MBFImage motorcycleImage = ImageUtilities.readMBF(new File("data/motorcycle.bmp"));
-			app.displayHybridImage(bicycleImage, motorcycleImage, app);			
+			app.displayHybridImage(bicycleImage, 7, motorcycleImage, 5, app);			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -44,16 +44,19 @@ public class App {
     /**
      * Make and display a hybrid image
      */
-    private void displayHybridImage(MBFImage lowPassFilterImage, MBFImage highPassFilterImage, App app) {
+    private void displayHybridImage(MBFImage lowPassFilterImage, float lowPassFilterSigma, 
+    		MBFImage highPassFilterImage, float highPassFilterSigma, App app) {
     	// Clone original image for high pass filter
 		MBFImage originalHighPassImage = highPassFilterImage.clone();
 		
 		// Sigma is the cut off frequency defined for each filter when amplitude gain is 1/2.
-		lowPassFilterImage = app.createLowPassFilter(lowPassFilterImage, 16f);
-		highPassFilterImage = app.createLowPassFilter(highPassFilterImage, 24f);
+		lowPassFilterImage = app.createLowPassFilter(lowPassFilterImage, lowPassFilterSigma);
+		highPassFilterImage = app.createLowPassFilter(highPassFilterImage, highPassFilterSigma);
 		
 		// High pass image made by subtracting low pass image from original
 		highPassFilterImage = originalHighPassImage.subtract(highPassFilterImage);
+		//DisplayUtilities.display(lowPassFilterImage);
+		//DisplayUtilities.display(highPassFilterImage);
 
 		// Finally create and display the hybrid image
 		MBFImage hybridImage = highPassFilterImage.add(lowPassFilterImage);
@@ -65,22 +68,14 @@ public class App {
      */
     private MBFImage createLowPassFilter(MBFImage image, float sigma) {
 		// Sigma= standard deviation of Gaussian, controls the cut off frequency
-		int size = (int) (8.0f * sigma + 1.0f);
-		if (size % 2 == 0) size++;
+    	int size = (int) (8.0f * sigma + 1.0f); // (this implies the window is +/- 4 sigmas from the centre of the Gaussian)
+    	if (size % 2 == 0) size++; // size must be odd
 		FImage guassianImage = Gaussian2D.createKernelImage(size, sigma);
 		float[][] guassianKernal = guassianImage.pixels;
-//		
-//		// Create kernal from pixels in image
-//		float[][] guassianKernal = new float[guassianImage.getWidth()][guassianImage.getHeight()];
-//		for (int y=0; y<guassianImage.getHeight(); y++) {
-//		    for (int x=0; x<guassianImage.getWidth(); x++) {
-//		    	guassianKernal[x][y] = guassianImage.getPixel(x, y);
-//		    }
-//		}
     	
     	// Apply low pass filter to each and in the image
-		FGaussianConvolve myGConvolution = new FGaussianConvolve(sigma);
-		FConvolution myConvolution = new FConvolution(guassianKernal);
+		MyConvolution myConvolution = new MyConvolution(guassianKernal);
+		//FGaussianConvolve myfConvolution = new FGaussianConvolve(sigma);
 		return image.process(myConvolution);
     }
 }
