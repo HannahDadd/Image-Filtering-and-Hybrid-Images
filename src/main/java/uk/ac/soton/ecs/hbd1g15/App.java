@@ -10,6 +10,7 @@ import org.openimaj.image.MBFImage;
 import org.openimaj.image.processing.convolution.FConvolution;
 import org.openimaj.image.processing.convolution.FGaussianConvolve;
 import org.openimaj.image.processing.convolution.Gaussian2D;
+import org.openimaj.image.processing.resize.ResizeProcessor;
 
 /**
  * OpenIMAJ Producing hybrid images from 2 similar images
@@ -23,7 +24,7 @@ public class App {
 	    	// Hybrid of each pair of images
 			MBFImage catImage = ImageUtilities.readMBF(new File("data/cat.bmp"));
 			MBFImage dogImage = ImageUtilities.readMBF(new File("data/dog.bmp"));
-			app.displayHybridImage(dogImage, 5, catImage, 5, app);
+			app.displayHybridImage(dogImage, 5, catImage, 7, app);
 
 			MBFImage einsteinImage = ImageUtilities.readMBF(new File("data/einstein.bmp"));
 			MBFImage marilynImage = ImageUtilities.readMBF(new File("data/marilyn.bmp"));
@@ -55,12 +56,18 @@ public class App {
 		
 		// High pass image made by subtracting low pass image from original
 		highPassFilterImage = originalHighPassImage.subtract(highPassFilterImage);
-		//DisplayUtilities.display(lowPassFilterImage);
-		//DisplayUtilities.display(highPassFilterImage);
+		
+		// Resize processor used to clearly show the change in image
+		ResizeProcessor resizeOne = new ResizeProcessor(0.75f);
+		ResizeProcessor resizeTwo = new ResizeProcessor(0.5f);
+		ResizeProcessor resizeThree = new ResizeProcessor(0.25f);
+		ResizeProcessor resizeFour = new ResizeProcessor(0.10f);
 
 		// Finally create and display the hybrid image
 		MBFImage hybridImage = highPassFilterImage.add(lowPassFilterImage);
-		DisplayUtilities.display(hybridImage);
+		MBFImage[] images = {hybridImage, hybridImage.process(resizeOne), hybridImage.process(resizeTwo),
+		              hybridImage.process(resizeThree), hybridImage.process(resizeFour)};
+		DisplayUtilities.display("", images);
     }
     
     /**
@@ -75,7 +82,6 @@ public class App {
     	
     	// Apply low pass filter to each and in the image
 		MyConvolution myConvolution = new MyConvolution(guassianKernal);
-		//FGaussianConvolve myfConvolution = new FGaussianConvolve(sigma);
 		return image.process(myConvolution);
     }
 }
