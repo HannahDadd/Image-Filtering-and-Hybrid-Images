@@ -7,8 +7,6 @@ import org.openimaj.image.DisplayUtilities;
 import org.openimaj.image.FImage;
 import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.MBFImage;
-import org.openimaj.image.processing.convolution.FConvolution;
-import org.openimaj.image.processing.convolution.FGaussianConvolve;
 import org.openimaj.image.processing.convolution.Gaussian2D;
 import org.openimaj.image.processing.resize.ResizeProcessor;
 
@@ -32,11 +30,19 @@ public class App {
 			
 			MBFImage fishImage = ImageUtilities.readMBF(new File("data/fish.bmp"));
 			MBFImage submarineImage = ImageUtilities.readMBF(new File("data/submarine.bmp"));
-			app.displayHybridImage(fishImage, 7, submarineImage, 5, app);
+			app.displayHybridImage(submarineImage, 8, fishImage, 5, app);
 			
 			MBFImage bicycleImage = ImageUtilities.readMBF(new File("data/bicycle.bmp"));
 			MBFImage motorcycleImage = ImageUtilities.readMBF(new File("data/motorcycle.bmp"));
-			app.displayHybridImage(bicycleImage, 7, motorcycleImage, 5, app);			
+			app.displayHybridImage(bicycleImage, 8, motorcycleImage, 8, app);	
+			
+			MBFImage planeImage = ImageUtilities.readMBF(new File("data/plane.bmp"));
+			MBFImage birdImage = ImageUtilities.readMBF(new File("data/bird.bmp"));
+			app.displayHybridImage(planeImage, 8, birdImage, 6, app);
+			
+			MBFImage tongueExprImage = ImageUtilities.readMBF(new File("data/exp1.jpg"));
+			MBFImage eyesExprImage = ImageUtilities.readMBF(new File("data/expr2.jpg"));
+			app.displayHybridImage(tongueExprImage, 2, eyesExprImage, 3, app);		
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -58,16 +64,28 @@ public class App {
 		highPassFilterImage = originalHighPassImage.subtract(highPassFilterImage);
 		
 		// Resize processor used to clearly show the change in image
-		ResizeProcessor resizeOne = new ResizeProcessor(0.75f);
-		ResizeProcessor resizeTwo = new ResizeProcessor(0.5f);
-		ResizeProcessor resizeThree = new ResizeProcessor(0.25f);
-		ResizeProcessor resizeFour = new ResizeProcessor(0.10f);
-
-		// Finally create and display the hybrid image
+		float[] sizeFactors = {0.5f, 0.25f, 0.12f, 0.06f};
+		double distanceBetweenImages = 0.5;
 		MBFImage hybridImage = highPassFilterImage.add(lowPassFilterImage);
-		MBFImage[] images = {hybridImage, hybridImage.process(resizeOne), hybridImage.process(resizeTwo),
-		              hybridImage.process(resizeThree), hybridImage.process(resizeFour)};
-		DisplayUtilities.display("", images);
+		
+		// Make a large black image to print the images on
+		int width = hybridImage.getWidth();
+		for(float sizeFactor : sizeFactors) {
+			width = (int) (width + Math.ceil(hybridImage.getWidth()*sizeFactor) + distanceBetweenImages);
+		}
+		MBFImage displayHybridImage = new MBFImage(width, hybridImage.getHeight());
+
+		// Finally display the hybrid images
+		int widthPassed = hybridImage.getWidth();
+		displayHybridImage.drawImage(hybridImage, hybridImage.getWidth(), 0);
+		
+		// Loop through each scale and add the scaled image to the display
+		for(float sizeFactor : sizeFactors) {
+			MBFImage imageToAdd = hybridImage.process(new ResizeProcessor(sizeFactor));
+			widthPassed = (int) (imageToAdd.getWidth() + distanceBetweenImages);
+			displayHybridImage.drawImage(imageToAdd, widthPassed, 0);
+		}
+		DisplayUtilities.display(displayHybridImage);
     }
     
     /**
